@@ -1,4 +1,4 @@
-# Twitterlocation.py
+# twitterlocation.py
 
 Tries to guess a country where are tweet originated. Reasonably accurate. Pseudo code:
 
@@ -7,4 +7,4 @@ Tries to guess a country where are tweet originated. Reasonably accurate. Pseudo
 3. (else) Use user profile location if available
 4. (else) Use location of up to ten followers if available
 
-Make sure to install Tweepy, enter your own API keys in config.py, and catch exceptions when importing as a module.
+Make sure to install Tweepy and googlemaps, enter your own API keys in config.py, and catch exceptions when importing as a module.

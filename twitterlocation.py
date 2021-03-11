@@ -1,52 +1,79 @@
 import config
 import tweepy
+import googlemaps
 
 auth = tweepy.OAuthHandler(config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
 auth.set_access_token(config.TWITTER_ACCESS_TOKEN, config.TWITTER_ACCESS_TOKEN_SECRET)
 
-api = tweepy.API(auth)
+twitter = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+gmaps = googlemaps.Client(key=config.GMAPS_ACCESS_TOKEN)
 
-def get_country_from_search(search):
-    if search:
-        first_result = search[0]
-        return first_result.country
-    return None
+def get_address_component(search, level="country"):
+    names = []
+    for result in search:
+        for component in result["address_components"]:
+            if component["types"][0] == level and component["types"][1] == "political":
+                names.append(component["long_name"])
+    if not names:
+        return "UNK"
+    return max(set(names), key = names.count) 
 
-def guess_country(id):
-    status = api.get_status(id)
+def from_latlon(lat, lon):
+    search = gmaps.reverse_geocode((lat, lon))
+    return search
 
-    # see if the tweet has a geotag enabled
+def from_coordinates(coordinates):
+    lon, lat = status.coordinates['coordinates']
+    search = from_latlon(lat, lon)
+    return search
+
+def from_place(place):
+    bbox = status.place.bounding_box.coordinates
+    lat = bbox[0][0][1]
+    lon = bbox[0][0][0]
+    search = from_latlon(lat, lon)
+    return search
+
+def from_user_location(user_location):
+    search = gmaps.places(query=user_location)
+    if search["status"] == "OK":
+        result = search["results"][0]
+        lat = result["geometry"]["location"]["lat"]
+        lon = result["geometry"]["location"]["lng"]
+        return from_latlon(lat, lon)
+
+def from_followers(followers):
+    search = []
+    for follower in followers:
+        if follower.location:
+            add = from_user_location(follower.location)
+            if add:
+                search += add
+    return search
+
+def from_user(user):
+    if user.location:
+        search = from_user_location(user.location)
+        if search:
+            return search
+    followers = [follower for follower in tweepy.Cursor(twitter.followers, id=user.id).items(10)]
+    search = from_followers(followers)
+    return search
+    
+def from_status(status):
     if status.coordinates:
-        lon, lat = status.coordinates['coordinates']
-        search = api.geo_search(lon=lon, lat=lat, granularity="country")
-        return get_country_from_search(search)
-    # if not, see if the tweet has a location attached
+        return from_coordinates(status.coordinates)
     if status.place:
-        bbox = status.place.bounding_box.coordinates
-        lon, lat = bbox[0][0]
-        search = api.geo_search(lon=lon, lat=lat, granularity="country")
-        return get_country_from_search(search)
-    # if not check if the user has a location attached
+        return from_place(status.place)
     if status.user:
-        user = status.user
-        if user.location:
-            search = api.geo_search(query=user.location, granularity="country")
-            return get_country_from_search(search)
-        locations_vote = []
-        # otherwise try to extract locations for their followers
-        for follower in tweepy.Cursor(api.followers, id=user.id).items():
-            if len(locations_vote) == 10:
-                break
-            if follower.location:
-                search = api.geo_search(query=follower.location, granularity="country")
-                locations_vote.append(get_country_from_search(search))
-
-        return max(set(locations_vote), key = locations_vote.count)
-    return None
+        return from_user(status.user)
+    
+def main():
+    example_status = twitter.search(q="example", count=1)[0]
+    search = from_status(example_status)
+    country = get_address_component(search, level="country")
+    locality = get_address_component(search, level="locality")
+    print(f"https://www.twitter.com/user/status/{example_status.id_str} from {locality}, {country}")
 
 if __name__ == "__main__":
-    try:
-        country = guess_country(1318879612194226176)
-        print(country)
-    except BaseException as e:
-        print(f"Some Tweepy error: {e}")
+    main()
