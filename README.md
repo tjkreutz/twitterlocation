@@ -1,6 +1,6 @@
 # twitterlocation.py
 
-Tries to guess a country where are tweet originated. Reasonably accurate. Pseudo code:
+Guesses the country and locality of where a tweet originated. Todo: test accuracy. Pseudo code:
 
 1. Use coordinates of tweet if available
 2. (else) Use tagged location of tweet if available
