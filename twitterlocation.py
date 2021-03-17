@@ -23,19 +23,19 @@ def from_latlon(lat, lon):
     return search
 
 def from_coordinates(coordinates):
-    lon, lat = status.coordinates['coordinates']
+    lon, lat = coordinates['coordinates']
     search = from_latlon(lat, lon)
     return search
 
 def from_place(place):
-    bbox = status.place.bounding_box.coordinates
+    bbox = place.bounding_box.coordinates
     lat = bbox[0][0][1]
     lon = bbox[0][0][0]
     search = from_latlon(lat, lon)
     return search
 
-def from_user_location(user_location):
-    search = gmaps.places(query=user_location)
+def from_location(location):
+    search = gmaps.places(query=location)
     if search["status"] == "OK":
         result = search["results"][0]
         lat = result["geometry"]["location"]["lat"]
@@ -46,14 +46,14 @@ def from_followers(followers):
     search = []
     for follower in followers:
         if follower.location:
-            add = from_user_location(follower.location)
+            add = from_location(follower.location)
             if add:
                 search += add
     return search
 
 def from_user(user):
     if user.location:
-        search = from_user_location(user.location)
+        search = from_location(user.location)
         if search:
             return search
     followers = [follower for follower in tweepy.Cursor(twitter.followers, id=user.id).items(10)]
