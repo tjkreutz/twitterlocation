@@ -1,8 +1,0 @@
-# Twitter keys
-TWITTER_ACCESS_TOKEN = ""
-TWITTER_ACCESS_TOKEN_SECRET = ""
-TWITTER_CONSUMER_KEY = ""
-TWITTER_CONSUMER_SECRET = ""
-
-# Gmaps places + geolocate key
-GMAPS_ACCESS_TOKEN = ""

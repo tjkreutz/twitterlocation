@@ -1,4 +1,4 @@
-# twitterlocation.py
+# Twitterlocation
 
 Guesses the country and locality of where a tweet originated. Todo: test accuracy. Pseudo code:
 
