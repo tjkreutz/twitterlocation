@@ -1,6 +1,6 @@
 import tweepy
 
-def get_address_component(search, level="country"):
+def get_result(search, level="country"):
     names = []
     for result in search:
         for component in result["address_components"]:
@@ -8,7 +8,9 @@ def get_address_component(search, level="country"):
                 names.append(component["long_name"])
     if not names:
         return "UNK"
-    return max(set(names), key = names.count) 
+    level_max = max(set(names), key = names.count)
+    result = search[names.index(level_max)]
+    return result
 
 def from_latlon(lat, lon, gmaps):
     search = gmaps.reverse_geocode((lat, lon))
